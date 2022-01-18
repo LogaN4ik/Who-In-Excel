@@ -1,0 +1,69 @@
+'#############################################################################################
+Sub КтовЕкселеОтчет()
+Dim fso, myPath, myFolder, myFile, myFiles(), i
+'Записываем в переменную myPath полное имя папки
+myPath = "G:\Plan\ОПБиК\2\Скрипты\wiExcel\Reports\Last\"
+    'Создаем новый экземпляр FileSystemObject
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    'Присваиваем переменной myFolder ссылку на объект Folder
+    Set myFolder = fso.GetFolder(myPath)
+    'Проверяем, есть ли файлы в папке myFolder
+    If myFolder.Files.Count = 0 Then
+        MsgBox "В папке «" & myPath & "» файлов нет"
+        Exit Sub
+    End If
+'Задаем массиву размерность
+ReDim myFiles(1 To myFolder.Files.Count)
+    'Загружаем в массив полные имена файлов
+    For Each myFile In myFolder.Files
+        i = i + 1
+        myFiles(i) = myFile.Path
+    Next
+'кто что открыл
+Dim myfilepath As String
+Dim counter As Integer
+Dim curLine As String
+
+For i = 1 To UBound(myFiles)
+    myfilepath = myFiles(i)
+    Open myfilepath For Input As #1
+    Do Until EOF(1)
+        counter = counter + 1
+        Line Input #1, curLine
+        vivod = curLine + vivod
+    Loop
+    Close #1
+Next i
+
+vivod = Replace(vivod, "@{Пользователь=", "")
+vivod = Replace(vivod, "; Дата=", ";")
+vivod = Replace(vivod, "; Статус=", ";")
+vivod = Replace(vivod, "; Книга=", ";")
+vivod = Replace(vivod, "}", Chr(10))
+'MsgBox vivod
+massiv_vivod = Split(vivod, Chr(10))
+'формируем отчет
+Workbooks.Add
+For i = 0 To UBound(massiv_vivod)
+    Cells(i + 1, 1) = massiv_vivod(i)
+Next i
+
+'Разбиваю по столбцам
+Columns("A:A").Select
+Selection.TextToColumns Destination:=Range("A1"), DataType:=xlDelimited, TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, Semicolon:=True, Comma:=False, Space:=False, Other:=False, FieldInfo:=Array(Array(1, 1), Array(2, 1), Array(3, 1), Array(4, 1)), TrailingMinusNumbers:=True
+
+'формирую умную таблицу
+strok = UBound(massiv_vivod)
+Dim table_range As Range
+Set table_range = Range("A1:D" & strok)
+ActiveSheet.ListObjects.Add(xlSrcRange, table_range, , xlNo).Name = "Активность пользователей"
+Columns("A:D").EntireColumn.AutoFit
+Cells(1, 1) = "Пользователь"
+Cells(1, 3) = "Статус "
+Cells(1, 4) = "Книга"
+Cells(1, 5) = "Лист?"
+ActiveWorkbook.SlicerCaches.Add2(ActiveSheet.ListObjects("Активность пользователей"), "Пользователь").Slicers.Add ActiveSheet, , "Пользователь", "Пользователь", 10, 583.5, 144, 500
+ActiveWorkbook.SlicerCaches.Add2(ActiveSheet.ListObjects("Активность пользователей"), "Статус ").Slicers.Add ActiveSheet, , "Статус ", "Статус ", 10, 700, 144, 500
+ActiveWorkbook.SlicerCaches.Add2(ActiveSheet.ListObjects("Активность пользователей"), "Книга").Slicers.Add ActiveSheet, , "Книга", "Книга", 10, 800, 144, 500
+Cells(1, 1).Select
+End Sub
